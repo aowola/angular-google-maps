@@ -43,6 +43,16 @@
   function floatEqual (f1, f2) {
     return (Math.abs(f1 - f2) < 0.000001);
   }
+
+  /**
+   *  google.maps.ControlPosition value
+   *  
+   */
+  function toControlPosition(position) {
+    return position in google.maps.ControlPosition ? 
+      google.maps.ControlPosition[position] : 
+      google.maps.ControlPosition.TOP_LEFT;
+  }
   
   /* 
    * Create the model in a self-contained class where map-specific logic is 
@@ -295,6 +305,12 @@
           v.setMap(null);
         });
       };
+
+      this.addControl = function(position, element) {
+        if(_instance && element) {
+          _instance.controls[toControlPosition(position)].push(element);
+        }
+      }
     }
     
     // Done
@@ -333,11 +349,12 @@
       scope: {
         center: "=center", // required
         markers: "=markers", // optional
+        options: "=options", // optional
         latitude: "=latitude", // required
         longitude: "=longitude", // required
         zoom: "=zoom", // required
         refresh: "&refresh", // optional
-        windows: "=windows" // optional"
+        windows: "=windows" // optional
       },
       controller: controller,      
       link: function (scope, element, attrs, ctrl) {
@@ -348,7 +365,7 @@
             (!angular.isDefined(scope.center.lat) || 
                 !angular.isDefined(scope.center.lng))) {
         	
-          $log.error("angular-google-maps: ould not find a valid center property");          
+          $log.error("angular-google-maps: could not find a valid center property");          
           return;
         }
         
@@ -362,7 +379,10 @@
         // Parse options
         var opts = {options: {}};
         if (attrs.options) {
-          opts.options = angular.fromJson(attrs.options);
+
+        }
+        if (angular.isDefined(scope.options)) {
+          opts.options = scope.options;
         }
         
         // Create our model
@@ -373,6 +393,8 @@
           zoom: scope.zoom
         }));       
       
+        // Add controls
+
         _m.on("drag", function () {
           
           var c = _m.center;
